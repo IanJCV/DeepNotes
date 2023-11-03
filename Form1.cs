@@ -2,6 +2,8 @@ using DeepSpeechClient;
 using DeepSpeechClient.Models;
 using NAudio.Wave;
 using NAudio.Wave.SampleProviders;
+using Whisper.net.Ggml;
+using Whisper.net;
 
 namespace DeepNotes
 {
@@ -101,7 +103,7 @@ namespace DeepNotes
             recorder = new WaveInEvent();
             InitSpeechClient();
 
-            recorder.WaveFormat = new WaveFormat(speechClient.GetModelSampleRate(), 16, 1);
+            recorder.WaveFormat = new WaveFormat(16000, 16, 1);
             writer = new WaveFileWriter(Path.GetFullPath("./file.wav"), recorder.WaveFormat);
 
             recorder.StartRecording();
@@ -116,10 +118,29 @@ namespace DeepNotes
         private void ProcessData(object? sender, WaveInEventArgs e)
         {
             writer.Write(e.Buffer, 0, e.BytesRecorded);
+            SetText((writer.Position / recorder.WaveFormat.AverageBytesPerSecond).ToString());
 
-            if (writer.Position > recorder.WaveFormat.AverageBytesPerSecond * 30)
+            if (writer.Position > recorder.WaveFormat.AverageBytesPerSecond * 10)
             {
                 recorder.StopRecording();
+            }
+        }
+
+        delegate void SetTextCallback(string text);
+
+        private void SetText(string text)
+        {
+            // InvokeRequired required compares the thread ID of the
+            // calling thread to the thread ID of the creating thread.
+            // If these threads are different, it returns true.
+            if (timer.InvokeRequired)
+            {
+                SetTextCallback d = new SetTextCallback(SetText);
+                Invoke(d, new object[] { text });
+            }
+            else
+            {
+                timer.Text = text;
             }
         }
 
@@ -134,7 +155,9 @@ namespace DeepNotes
 
             textBox1.Text = speechClient.IntermediateDecode(stream);
 
-            if (recorder != null && e.BytesRecorded > recorder.WaveFormat.AverageBytesPerSecond * 30)
+
+
+            if (recorder != null && e.BytesRecorded > recorder.WaveFormat.AverageBytesPerSecond * 10)
             {
                 recorder.StopRecording();
             }
@@ -156,14 +179,92 @@ namespace DeepNotes
             stopButton.Enabled = false;
 
             var audioFile = Path.GetFullPath("./file.wav");
+
+            //DoDeepSpeech(audioFile);
+            DoWhisper(audioFile);
+        }
+
+        private async void DoWhisper(string audioFile)
+        {
+            // We declare three variables which we will use later, ggmlType, modelFileName and wavFileName
+            var ggmlType = GgmlType.Base;
+            var modelFileName = "ggml-small.bin";
+            var wavFileName = audioFile;
+
+            // This section detects whether the "ggml-base.bin" file exists in our project disk. If it doesn't, it downloads it from the internet
+            if (!File.Exists(modelFileName))
+            {
+                await DownloadModel(modelFileName, ggmlType);
+            }
+
+            // This section creates the whisperFactory object which is used to create the processor object.
+            using var whisperFactory = WhisperFactory.FromPath("ggml-small.bin");
+
+            // This section creates the processor object which is used to process the audio file, it uses language `auto` to detect the language of the audio file.
+            using var processor = whisperFactory.CreateBuilder()
+                .WithLanguage("auto")
+                .Build();
+
+            using var fileStream = File.OpenRead(wavFileName);
+
+            // This section processes the audio file and prints the results (start time, end time and text) to the console.
+            await foreach (var result in processor.ProcessAsync(fileStream))
+            {
+                textBox1.Text = $"{result.Text}";
+            }
+        }
+
+        private static async Task DownloadModel(string fileName, GgmlType ggmlType)
+        {
+            Console.WriteLine($"Downloading Model {fileName}");
+            using var modelStream = await WhisperGgmlDownloader.GetGgmlModelAsync(ggmlType);
+            using var fileWriter = File.OpenWrite(fileName);
+            await modelStream.CopyToAsync(fileWriter);
+        }
+
+        private void DoDeepSpeech(string audioFile)
+        {
             var waveBuffer = new WaveBuffer(File.ReadAllBytes(audioFile));
 
-            WaveOut wave = new();
-            wave.Init(new AudioFileReader(audioFile));
-            wave.Play();
+            using (var reader = new WaveFileReader(audioFile))
+            {
+                var outFormat = new WaveFormat(reader.WaveFormat.SampleRate, 16, reader.WaveFormat.Channels);
+                var provider = new WaveToSampleProvider(new Wave16ToFloatProvider(reader));
 
-            var metadata = speechClient.SpeechToText(waveBuffer.ShortBuffer, Convert.ToUInt32(waveBuffer.MaxSize / 2));
-            textBox1.Text = metadata;
+                float amplificationFactor = 2.0f;
+
+                float[] buffer = new float[reader.WaveFormat.SampleRate * reader.WaveFormat.Channels];
+                int samplesRead;
+                List<short> allSamples = new List<short>();
+
+                while ((samplesRead = provider.Read(buffer, 0, buffer.Length)) > 0)
+                {
+                    for (int i = 0; i < samplesRead; i++)
+                    {
+                        buffer[i] *= amplificationFactor;
+
+                        if (buffer[i] > 1.0f) buffer[i] = 1.0f;
+                        else if (buffer[i] < -1.0f) buffer[i] = -1.0f;
+                    }
+
+                    short[] shortBuffer = buffer.Take(samplesRead).Select(f => (short)(f * 32767)).ToArray();
+                    allSamples.AddRange(shortBuffer);
+                }
+
+                // Now you can pass the amplified audio data to DeepSpeech
+                var allSamplesArray = allSamples.ToArray();
+                using (DeepSpeech dp = new("deepspeech-0.9.3-models.pbmm"))
+                {
+                    textBox1.Text = dp.SpeechToText(allSamplesArray, (uint)allSamplesArray.Length);
+                }
+            }
+
+            //WaveOut wave = new();
+            //wave.Init(new AudioFileReader(audioFile));
+            //wave.Play();
+
+            //var metadata = speechClient.SpeechToText(waveBuffer.ShortBuffer, Convert.ToUInt32(waveBuffer.MaxSize / 2));
+            //textBox1.Text = metadata;
 
             speechClient.Dispose();
             waveBuffer.Clear();
