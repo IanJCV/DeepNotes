@@ -1,66 +1,97 @@
-﻿using Newtonsoft.Json;
-
-namespace DeepNotes
+﻿namespace DeepNotes
 {
-
-    internal class Folder
+    internal class Database
     {
-        public string Name = "Folder";
-        public List<Note> Notes = new();
-        public List<Folder> Folders = new();
-        public Folder Parent;
-
-        public Folder(string name, Folder parent)
+        private static Database _instance;
+        public static Database Instance
         {
-            Name = name;
-            Parent = parent;
-        }
-
-        public int GetIndex()
-        {
-            int index = 0;
-            Folder p = Parent;
-            while (p != null)
+            get
             {
-                index++;
-                p = p.Parent;
+                if (_instance == null)
+                {
+                    _instance = new Database();
+                    _instance.Init();
+                }
+
+                return _instance;
             }
-            return index;
+
+            set
+            {
+                _instance = value;
+            }
         }
 
-        public string GetPath()
+        private string RootFolder = Path.GetFullPath("./notes");
+
+        public List<Folder> AllFolders { get; private set; } = new();
+        public Dictionary<string, Folder> FolderDict = new();
+
+        public void Init()
         {
-            return Parent == null ? Name : Path.Combine(Parent.GetPath(), Name);
+            GenerateFolders();
+
+            foreach (var f in AllFolders)
+            {
+                OutputRecursive(f, 1);
+            }
+
+            foreach (var pf in FolderDict)
+            {
+                Console.WriteLine($"{pf.Key} : {pf.Value.Name}");
+            }
         }
 
-        public string GetAbsolutePath()
+        public void ForEachFolder(Action<Folder> action)
         {
-            return Path.Combine(AppContext.BaseDirectory, "notes", GetPath());
+            foreach (var folder in AllFolders)
+            {
+                action(folder);
+            }
         }
 
-        public void AddNote(Note note)
+        private void OutputRecursive(Folder f, int iter)
         {
-            if (note == null)
-                throw new ArgumentNullException(nameof(note), "Note was null.");
-
-            Notes.Add(note);
+            Console.Write($"path: {f.GetPath()}\n");
+            for (int i = 0; i < f.Folders.Count; i++)
+            {
+                Folder? child = f.Folders[i];
+                for (int j = 0; j < iter; j++)
+                {
+                    Console.Write('\t');
+                }
+                OutputRecursive(child, iter + 1);
+            }
         }
 
-        //public List<Folder> GetAllFoldersOnDisk()
-        //{
-        //    return Directory.GetDirectories(GetAbsolutePath(), "*", SearchOption.TopDirectoryOnly);
-        //}
+        private void GenerateFolders()
+        {
+            var basepath = Directory.CreateDirectory(RootFolder).FullName;
+            var rootDirs = Directory.GetDirectories(basepath, "*", SearchOption.TopDirectoryOnly);
+            
+            foreach (var dir in rootDirs)
+            {
+                var fl = new Folder(Path.GetFileName(dir), null);
+                fl.Folders = Crawl(fl, dir);
 
-        //public Folder FolderFromDir(DirectoryInfo dir)
-        //{
-        //    Folder f = new();
-        //    f.Parent = (dir.Parent == null || dir.Parent.Name == "notes") ? null : ;
-        //}
+                FolderDict.Add(fl.GetPath(), fl);
+                AllFolders.Add(fl);
+            }
+        }
 
-        //public Folder GetFolderByPath()
-        //{
-
-        //}
+        private List<Folder> Crawl(Folder rootFolder, string dir)
+        {
+            var folders = new List<Folder>();
+            var dirs = Directory.GetDirectories(dir, "*", SearchOption.TopDirectoryOnly);
+            foreach (var d in dirs)
+            {
+                var fl = new Folder(Path.GetFileName(d), rootFolder);
+                fl.Folders = Crawl(fl, d);
+                FolderDict.Add(fl.GetPath(), fl);
+                folders.Add(fl);
+            }
+            return folders;
+        }
     }
 
     /*
@@ -176,7 +207,7 @@ namespace DeepNotes
 
         public IEnumerable<FileNode> FindAllJsonFiles()
         {
-            return FindAllFilesRecursive().Where(f => f.Extension.Equals(".json", StringComparison.OrdinalIgnoreCase));
+            return FindAllFilesRecursive().Where(rootFolder => rootFolder.Extension.Equals(".json", StringComparison.OrdinalIgnoreCase));
         }
 
         private IEnumerable<FileNode> FindAllFilesRecursive()

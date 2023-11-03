@@ -39,7 +39,12 @@
             statusStrip1 = new StatusStrip();
             toolStripStatusLabel1 = new ToolStripStatusLabel();
             splitContainer1 = new SplitContainer();
+            timer = new Label();
+            textBox1 = new TextBox();
+            stopButton = new Button();
             treeView1 = new TreeView();
+            volumeSlider1 = new NAudio.Gui.VolumeSlider();
+            volumeMeter1 = new NAudio.Gui.VolumeMeter();
             menuStrip1.SuspendLayout();
             statusStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
@@ -59,7 +64,7 @@
             // 
             // menuStrip1
             // 
-            menuStrip1.BackColor = Color.FromArgb(207, 198, 176);
+            menuStrip1.BackColor = SystemColors.Control;
             menuStrip1.Items.AddRange(new ToolStripItem[] { fileToolStripMenuItem, helpToolStripMenuItem });
             menuStrip1.Location = new Point(0, 0);
             menuStrip1.Name = "menuStrip1";
@@ -107,7 +112,7 @@
             // 
             // statusStrip1
             // 
-            statusStrip1.BackColor = Color.FromArgb(207, 198, 176);
+            statusStrip1.BackColor = SystemColors.Control;
             statusStrip1.Items.AddRange(new ToolStripItem[] { toolStripStatusLabel1 });
             statusStrip1.Location = new Point(0, 428);
             statusStrip1.Name = "statusStrip1";
@@ -129,7 +134,12 @@
             // 
             // splitContainer1.Panel1
             // 
-            splitContainer1.Panel1.BackColor = Color.FromArgb(206, 105, 106);
+            splitContainer1.Panel1.BackColor = SystemColors.Control;
+            splitContainer1.Panel1.Controls.Add(volumeMeter1);
+            splitContainer1.Panel1.Controls.Add(volumeSlider1);
+            splitContainer1.Panel1.Controls.Add(timer);
+            splitContainer1.Panel1.Controls.Add(textBox1);
+            splitContainer1.Panel1.Controls.Add(stopButton);
             splitContainer1.Panel1.Controls.Add(recordButton);
             // 
             // splitContainer1.Panel2
@@ -140,20 +150,66 @@
             splitContainer1.SplitterDistance = 266;
             splitContainer1.TabIndex = 1;
             // 
+            // timer
+            // 
+            timer.AutoSize = true;
+            timer.Location = new Point(93, 7);
+            timer.Name = "timer";
+            timer.Size = new Size(34, 15);
+            timer.TabIndex = 3;
+            timer.Text = "00:00";
+            // 
+            // textBox1
+            // 
+            textBox1.Location = new Point(3, 144);
+            textBox1.Multiline = true;
+            textBox1.Name = "textBox1";
+            textBox1.Size = new Size(261, 257);
+            textBox1.TabIndex = 2;
+            // 
+            // stopButton
+            // 
+            stopButton.Enabled = false;
+            stopButton.Location = new Point(12, 32);
+            stopButton.Name = "stopButton";
+            stopButton.Size = new Size(75, 23);
+            stopButton.TabIndex = 1;
+            stopButton.Text = "Stop";
+            stopButton.UseVisualStyleBackColor = true;
+            stopButton.Click += stopButton_Click;
+            // 
             // treeView1
             // 
-            treeView1.BackColor = Color.FromArgb(207, 198, 176);
+            treeView1.BackColor = SystemColors.Control;
             treeView1.Dock = DockStyle.Fill;
             treeView1.Location = new Point(0, 0);
             treeView1.Name = "treeView1";
             treeView1.Size = new Size(530, 404);
             treeView1.TabIndex = 0;
             // 
+            // volumeSlider1
+            // 
+            volumeSlider1.Location = new Point(12, 61);
+            volumeSlider1.Name = "volumeSlider1";
+            volumeSlider1.Size = new Size(96, 16);
+            volumeSlider1.TabIndex = 5;
+            // 
+            // volumeMeter1
+            // 
+            volumeMeter1.Amplitude = 0F;
+            volumeMeter1.Location = new Point(12, 83);
+            volumeMeter1.MaxDb = 18F;
+            volumeMeter1.MinDb = -60F;
+            volumeMeter1.Name = "volumeMeter1";
+            volumeMeter1.Size = new Size(96, 23);
+            volumeMeter1.TabIndex = 6;
+            volumeMeter1.Text = "volumeMeter1";
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            BackColor = Color.FromArgb(207, 198, 176);
+            BackColor = SystemColors.Control;
             ClientSize = new Size(800, 450);
             Controls.Add(splitContainer1);
             Controls.Add(menuStrip1);
@@ -166,6 +222,7 @@
             statusStrip1.ResumeLayout(false);
             statusStrip1.PerformLayout();
             splitContainer1.Panel1.ResumeLayout(false);
+            splitContainer1.Panel1.PerformLayout();
             splitContainer1.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)splitContainer1).EndInit();
             splitContainer1.ResumeLayout(false);
@@ -187,5 +244,10 @@
         private ToolStripStatusLabel toolStripStatusLabel1;
         private SplitContainer splitContainer1;
         private TreeView treeView1;
+        private Button stopButton;
+        private TextBox textBox1;
+        private Label timer;
+        private NAudio.Gui.VolumeMeter volumeMeter1;
+        private NAudio.Gui.VolumeSlider volumeSlider1;
     }
 }
