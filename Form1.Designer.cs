@@ -39,12 +39,11 @@
             statusStrip1 = new StatusStrip();
             toolStripStatusLabel1 = new ToolStripStatusLabel();
             splitContainer1 = new SplitContainer();
+            saveButton = new Button();
             timer = new Label();
             textBox1 = new TextBox();
             stopButton = new Button();
             treeView1 = new TreeView();
-            volumeSlider1 = new NAudio.Gui.VolumeSlider();
-            volumeMeter1 = new NAudio.Gui.VolumeMeter();
             menuStrip1.SuspendLayout();
             statusStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
@@ -135,8 +134,7 @@
             // splitContainer1.Panel1
             // 
             splitContainer1.Panel1.BackColor = SystemColors.Control;
-            splitContainer1.Panel1.Controls.Add(volumeMeter1);
-            splitContainer1.Panel1.Controls.Add(volumeSlider1);
+            splitContainer1.Panel1.Controls.Add(saveButton);
             splitContainer1.Panel1.Controls.Add(timer);
             splitContainer1.Panel1.Controls.Add(textBox1);
             splitContainer1.Panel1.Controls.Add(stopButton);
@@ -149,6 +147,16 @@
             splitContainer1.Size = new Size(800, 404);
             splitContainer1.SplitterDistance = 266;
             splitContainer1.TabIndex = 1;
+            // 
+            // saveButton
+            // 
+            saveButton.Location = new Point(12, 61);
+            saveButton.Name = "saveButton";
+            saveButton.Size = new Size(75, 23);
+            saveButton.TabIndex = 4;
+            saveButton.Text = "Save";
+            saveButton.UseVisualStyleBackColor = true;
+            saveButton.Click += saveButton_Click;
             // 
             // timer
             // 
@@ -187,24 +195,6 @@
             treeView1.Size = new Size(530, 404);
             treeView1.TabIndex = 0;
             // 
-            // volumeSlider1
-            // 
-            volumeSlider1.Location = new Point(12, 61);
-            volumeSlider1.Name = "volumeSlider1";
-            volumeSlider1.Size = new Size(96, 16);
-            volumeSlider1.TabIndex = 5;
-            // 
-            // volumeMeter1
-            // 
-            volumeMeter1.Amplitude = 0F;
-            volumeMeter1.Location = new Point(12, 83);
-            volumeMeter1.MaxDb = 18F;
-            volumeMeter1.MinDb = -60F;
-            volumeMeter1.Name = "volumeMeter1";
-            volumeMeter1.Size = new Size(96, 23);
-            volumeMeter1.TabIndex = 6;
-            volumeMeter1.Text = "volumeMeter1";
-            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -216,7 +206,7 @@
             Controls.Add(statusStrip1);
             MainMenuStrip = menuStrip1;
             Name = "Form1";
-            Text = "Form1";
+            Text = "DeepNotes";
             menuStrip1.ResumeLayout(false);
             menuStrip1.PerformLayout();
             statusStrip1.ResumeLayout(false);
@@ -249,5 +239,6 @@
         private Label timer;
         private NAudio.Gui.VolumeMeter volumeMeter1;
         private NAudio.Gui.VolumeSlider volumeSlider1;
+        private Button saveButton;
     }
 }
