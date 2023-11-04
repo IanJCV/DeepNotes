@@ -133,8 +133,8 @@ namespace DeepNotes
 
         private async void DoWhisper(string audioFile)
         {
-            var ggmlType = GgmlType.TinyEn;
-            var modelFileName = "ggml-tiny.en.bin";
+            var ggmlType = GgmlType.Tiny;
+            var modelFileName = "ggml-tiny.bin";
             var wavFileName = audioFile;
 
             if (!File.Exists(modelFileName))
@@ -142,11 +142,12 @@ namespace DeepNotes
                 await DownloadModel(modelFileName, ggmlType);
             }
 
-            using var whisperFactory = WhisperFactory.FromPath("ggml-tiny.en.bin");
+            using var whisperFactory = WhisperFactory.FromPath("ggml-tiny.bin");
 
             using var processor = whisperFactory.CreateBuilder()
                 .WithLanguage("auto")
-                .WithNoSpeechThreshold(100f)
+                //.WithNoSpeechThreshold(100f)
+                .WithTranslate()
                 .Build();
 
             using var fileStream = File.OpenRead(wavFileName);
