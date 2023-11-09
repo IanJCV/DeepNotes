@@ -1,6 +1,7 @@
 using NAudio.Wave;
 using Whisper.net.Ggml;
 using Whisper.net;
+using System.Net;
 
 namespace DeepNotes
 {
@@ -139,11 +140,13 @@ namespace DeepNotes
 
             if (!File.Exists(modelFileName))
             {
+                SetStatus($"Model {Path.GetFileNameWithoutExtension(modelFileName)} not found. Downloading...");
                 await DownloadModel(modelFileName, ggmlType);
             }
 
             using var whisperFactory = WhisperFactory.FromPath("ggml-tiny.bin");
 
+            SetStatus("Model found.");
             using var processor = whisperFactory.CreateBuilder()
                 .WithLanguage("auto")
                 //.WithNoSpeechThreshold(100f)
@@ -152,11 +155,14 @@ namespace DeepNotes
 
             using var fileStream = File.OpenRead(wavFileName);
 
+            SetStatus("Processing...");
             await foreach (var result in processor.ProcessAsync(fileStream))
             {
                 textBox1.Text += $"{result.Text}";
                 textBox1.Text = textBox1.Text.Trim();
             }
+
+            SetStatus("Done.");
         }
 
         private static async Task DownloadModel(string fileName, GgmlType ggmlType)
@@ -187,6 +193,16 @@ namespace DeepNotes
         private void saveButton_Click(object sender, EventArgs e)
         {
 
+        }
+
+        private void AppUpdate()
+        {
+
+
+            using (HttpClient client = new HttpClient())
+            {
+
+            }
         }
     }
 }
